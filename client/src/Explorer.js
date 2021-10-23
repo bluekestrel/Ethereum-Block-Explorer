@@ -1,11 +1,19 @@
 import React from 'react';
 
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+
 class Explorer extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            data: null,
-            count: 0,
+            data: [],
+            stringData: [],
         }
     }
 
@@ -13,9 +21,6 @@ class Explorer extends React.Component {
         this.callBackendAPI("/")
             .then((res) => {
                 this.setState(
-                    {
-                        data: res.message
-                    },
                     () => {
                         this.checkForNewBlock();
                     }
@@ -28,7 +33,6 @@ class Explorer extends React.Component {
     callBackendAPI = async (route) => {
         const response = await fetch(`http://localhost:3042${route}`);
         const body = await response.json();
-        console.log(body);
 
         if (response.status !== 200) {
             throw Error(body.message) 
@@ -40,11 +44,14 @@ class Explorer extends React.Component {
         setInterval(() => {
             this.callBackendAPI("/poll")
             .then((res) => {
-                this.setState(
-                    {
-                        data: JSON.stringify(res.block)
-                    }
-                );
+                if (!(this.state.data.includes(res.block.number))) {
+                    this.setState((prevState) => (
+                        {
+                            data: [...prevState.data, res.block.number],
+                            stringData: [...prevState.stringData, JSON.stringify(res.block)]
+                        }
+                    ));
+                }
             })
             .catch(err => console.log(err));
         }, 10000)
@@ -53,7 +60,29 @@ class Explorer extends React.Component {
     render() {
         return (
             <div className="App">
-            <p className="App-intro">{this.state.data}</p>
+                <TableContainer component={Paper}>
+                    <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Ethereum Blocks</TableCell>
+                                <TableCell align="right">Block Link</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {this.state.data.map((row) => (
+                                <TableRow
+                                    key={row}
+                                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                                >
+                                <TableCell component="th" scope="row">
+                                    {row}
+                                </TableCell>
+                                <TableCell align="right">"TODO add hyperlink to block data"</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
             </div>
         );
     }
